@@ -1,0 +1,2 @@
+#define W_MAX_MEMORY 33554432
+#define W_DEBUG_METAFONT

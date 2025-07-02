@@ -1,0 +1,271 @@
+numeric size, hsize, control;
+size = hsize = 100;
+control = 0; % External program control player setting this variable
+
+numeric _player_width, _player_height, _player_offset, _player_position, _player_speed;
+_player_position = 0.5;
+_player_width = 0.01583;
+_player_height = 0.06203;
+_player_offset = 0.10817;
+_player_speed = 0.00001;
+
+pair _ball_position, _ball_speed;
+numeric _ball_size;
+_ball_size = 0.25*_player_height;
+_ball_position = (0.5, 0.5);
+_ball_speed = (-0.01, 0.00);
+
+numeric _wall_height, _wall_width, _wall_offset;
+_wall_height = 0.02091;
+_wall_width = 0.0343;
+_wall_offset = 0.11345;
+
+numeric _brick_width, _brick_height;
+_brick_width = 0.01847;
+_brick_height = 0.068441;
+
+numeric _brick_row_offset, _bricks_per_row;
+_brick_row_offset = 0.6121;
+
+boolean _need_initialize;
+_need_initialize = true;
+
+path _brick_state;
+_brick_state = (0, 0);
+
+% Screen
+beginchar("S", hsize, size, 0);
+  % Filling screen black:
+  pickup pensquare xscaled w yscaled h;
+  pickcolor (0, 0, 0, 1);
+  draw (w/2, h/2);
+  % Initializing (setting brick status and position):
+  if _need_initialize:
+    numeric i, j, y, x;
+    _bricks_per_row = floor((1-2*_wall_height)/_brick_height);
+    for i = 8 step -1 until 1:
+      x = _brick_row_offset + (i-1) * _brick_width;
+      for j = _bricks_per_row step -1 until 1:
+	y = j * ((1-2*_wall_height)/(_bricks_per_row+1))+_wall_height;
+	_brick_state = (1, 1)..controls (x, y) .. _brick_state;
+      endfor
+    endfor
+    _need_initialize = false;
+  fi
+  % Moving player:
+  if control > 0:
+    if _player_position < (1-_wall_height-0.5*_player_height):
+      _player_position = _player_position + _player_speed*h;
+      if _player_position > (1-_wall_height-0.5*_player_height):
+	_player_position = (1-_wall_height-0.5*_player_height);
+      fi
+    fi
+    control = 0;
+  elseif control < 0:
+    if _player_position > (_wall_height+0.5*_player_height):
+      _player_position = _player_position - _player_speed*h;
+      if _player_position < (_wall_height+0.5*_player_height):
+	_player_position = _wall_height+0.5*_player_height;
+      fi
+    fi
+    control = 0;
+  fi
+  % Ball
+  _ball_position = _ball_position + _ball_speed;
+  % Collision with lateral walls:
+  if (ypart _ball_position > 1-_wall_height - 0.5*_ball_size) and (ypart _ball_speed > 0):
+    _ball_speed = (xpart _ball_speed, -ypart _ball_speed);
+  elseif (ypart _ball_position < _wall_height + 0.5*_ball_size) and (ypart _ball_speed < 0):
+    _ball_speed = (xpart _ball_speed, -ypart _ball_speed);
+  fi
+  % Collision with player
+  if ((xpart _ball_position) < (_player_offset+0.5*_player_width+0.5*_ball_size*(h/w))) and
+    ((xpart _ball_position) > (_player_offset-0.5*_player_width)) and
+    (xpart _ball_speed < 0):
+    numeric dist;
+    dist = length ((ypart _ball_position) - _player_position);
+    if (dist <= (0.5*_player_height+0.5*_ball_size)):
+      if (ypart _ball_position > _player_position):
+	_ball_speed = (0.01, 0) rotated ((dist/(2.5/58))*45);
+      else:
+	_ball_speed = (0.01, 0) rotated ((dist/(2.5/58))*-45);
+      fi
+      _ball_position = (_player_offset+0.5*_player_width+0.5*_ball_size*(h/w),
+	  ypart _ball_position);
+    fi
+  % Collision with back wall
+  elseif ((xpart _ball_position) >= (1-_wall_offset-0.5*_wall_width-0.5*_ball_size*(h/w)))
+    and (xpart _ball_speed > 0):
+      _ball_position = (1-_wall_offset-0.5*_wall_width-0.5*_ball_size*(h/w),
+	ypart _ball_position);
+    _ball_speed = (-xpart _ball_speed, ypart _ball_speed);
+  fi
+  % Collision with bricks:
+  numeric i, total_bricks;
+  total_bricks = 8*_bricks_per_row;
+  for i = 0 step 1 until total_bricks:
+    if xpart point i of _brick_state = 1:
+
+    fi
+  endfor
+  % Drawing walls
+  pickcolor (0.8, 0.8, 0.8, 1);
+  pickup pensquare xscaled w yscaled _wall_height*h;
+  draw bot rt (0,h);
+  draw top rt (0,0);
+  pickup pensquare xscaled _wall_width*w yscaled h;
+  draw bot ((1-_wall_offset)*w, h);
+  % Drawing player
+  pickup pensquare xscaled _player_width*w yscaled _player_height*h;
+  pickcolor (0.03921, 0.5215, 0.76078, 1);
+  draw (_player_offset*w, _player_position*h);
+  % Drawing ball
+  pickup pencircle xscaled _ball_size*h yscaled _ball_size*h;
+  pickcolor (0.8, 0.8, 0.8, 1);
+  draw _ball_position xscaled w yscaled h;
+  % Drawing  bricks
+  numeric count, offset, current_brick;
+  current_brick = 0;
+  offset = _brick_row_offset;
+  for count = 1 step 1 until _bricks_per_row:
+    if xpart point current_brick of _brick_state = 1:
+      renderchar "B" between ((offset-0.5*_brick_width)*w,
+	  (h*count * ((1-2*_wall_height)/(_bricks_per_row+1)))-0.5*_brick_height*h+
+	  _wall_height*h) and
+	((offset+0.5*_brick_width)*w,
+	  (h*count * ((1-2*_wall_height)/(_bricks_per_row+1)))+0.5*_brick_height*h+
+	  _wall_height*h);
+    fi
+    current_brick = current_brick + 1;
+  endfor
+  offset = offset + _brick_width;
+  for count = 1 step 1 until _bricks_per_row:
+    if xpart point current_brick of _brick_state = 1:
+      renderchar "B" between ((offset-0.5*_brick_width)*w,
+	  (h*count * ((1-2*_wall_height)/(_bricks_per_row+1)))-0.5*_brick_height*h+
+	  _wall_height*h) and
+	((offset+0.5*_brick_width)*w,
+	  (h*count * ((1-2*_wall_height)/(_bricks_per_row+1)))+0.5*_brick_height*h+
+	  _wall_height*h);
+    fi
+    current_brick = current_brick + 1;
+  endfor
+  offset = offset + _brick_width;
+  for count = 1 step 1 until _bricks_per_row:
+    if xpart point current_brick of _brick_state = 1:
+      renderchar "C" between ((offset-0.5*_brick_width)*w,
+	  (h*count * ((1-2*_wall_height)/(_bricks_per_row+1)))-0.5*_brick_height*h+
+	  _wall_height*h) and
+	((offset+0.5*_brick_width)*w,
+	  (h*count * ((1-2*_wall_height)/(_bricks_per_row+1)))+0.5*_brick_height*h+
+	  _wall_height*h);
+    fi
+    current_brick = current_brick + 1;
+  endfor
+  offset = offset + _brick_width;
+  for count = 1 step 1 until _bricks_per_row:
+    if xpart point current_brick of _brick_state = 1:
+      renderchar "C" between ((offset-0.5*_brick_width)*w,
+	  (h*count * ((1-2*_wall_height)/(_bricks_per_row+1)))-0.5*_brick_height*h+
+	  _wall_height*h) and
+	((offset+0.5*_brick_width)*w,
+	  (h*count * ((1-2*_wall_height)/(_bricks_per_row+1)))+0.5*_brick_height*h+
+	  _wall_height*h);
+    fi
+    current_brick = current_brick + 1;
+  endfor
+  offset = offset + _brick_width;
+  for count = 1 step 1 until _bricks_per_row:
+    if xpart point current_brick of _brick_state = 1:
+      renderchar "D" between ((offset-0.5*_brick_width)*w,
+	  (h*count * ((1-2*_wall_height)/(_bricks_per_row+1)))-0.5*_brick_height*h+
+	  _wall_height*h) and
+	((offset+0.5*_brick_width)*w,
+	  (h*count * ((1-2*_wall_height)/(_bricks_per_row+1)))+0.5*_brick_height*h+
+	  _wall_height*h);
+    fi
+    current_brick = current_brick + 1;
+  endfor
+  offset = offset + _brick_width;
+  for count = 1 step 1 until _bricks_per_row:
+    if xpart point current_brick of _brick_state = 1:
+      renderchar "D" between ((offset-0.5*_brick_width)*w,
+	  (h*count * ((1-2*_wall_height)/(_bricks_per_row+1)))-0.5*_brick_height*h+
+	  _wall_height*h) and
+	((offset+0.5*_brick_width)*w,
+	  (h*count * ((1-2*_wall_height)/(_bricks_per_row+1)))+0.5*_brick_height*h+
+	  _wall_height*h);
+    fi
+    current_brick = current_brick + 1;
+  endfor
+  offset = offset + _brick_width;
+  for count = 1 step 1 until _bricks_per_row:
+    if xpart point current_brick of _brick_state = 1:
+      renderchar "E" between ((offset-0.5*_brick_width)*w,
+	  (h*count * ((1-2*_wall_height)/(_bricks_per_row+1)))-0.5*_brick_height*h+
+	  _wall_height*h) and
+	((offset+0.5*_brick_width)*w,
+	  (h*count * ((1-2*_wall_height)/(_bricks_per_row+1)))+0.5*_brick_height*h+
+	  _wall_height*h);
+    fi
+    current_brick = current_brick + 1;
+  endfor
+  offset = offset + _brick_width;
+  for count = 1 step 1 until _bricks_per_row:
+    if xpart point current_brick of _brick_state = 1:
+      renderchar "E" between ((offset-0.5*_brick_width)*w,
+	  (h*count * ((1-2*_wall_height)/(_bricks_per_row+1)))-0.5*_brick_height*h+
+	  _wall_height*h) and
+	((offset+0.5*_brick_width)*w,
+	  (h*count * ((1-2*_wall_height)/(_bricks_per_row+1)))+0.5*_brick_height*h+
+	  _wall_height*h);
+    fi
+    current_brick = current_brick + 1;
+  endfor
+
+  if xpart _ball_position > 0:
+    shipit;
+  fi
+endchar;
+
+% Brick 1
+beginchar("B", _brick_width*hsize, _brick_height*size, 0);
+  pickup pensquare xscaled w yscaled h;
+  pickcolor (0.7608, 0.7608, 0.1608, 1);
+  draw (w/2, h/2);
+  pickup pensquare;
+  pickcolor (color_r/2, color_g/2, color_b/2, 1);
+  draw rt top(0, 0)--rt bot(0, h)--lft bot (w, h)--lft top (w, 0)--cycle;
+endchar;
+
+% Brick 2
+beginchar("C", _brick_width*hsize, _brick_height*size, 0);
+  pickcolor (0.03922, 0.5216, 0.2, 1);
+  pickup pensquare xscaled w yscaled h;
+  draw (w/2, h/2);
+  pickup pensquare;
+  pickcolor (color_r/2, color_g/2, color_b/2, 1);
+  draw rt top(0, 0)--rt bot(0, h)--lft bot (w, h)--lft top (w, 0)--cycle;
+endchar;
+
+% Brick 3
+beginchar("D", _brick_width*hsize, _brick_height*size, 0);
+  pickcolor (0.7607, 0.5216, 0.03921, 1);
+  pickup pensquare xscaled w yscaled h;
+  draw (w/2, h/2);
+  pickup pensquare;
+  pickcolor (color_r/2, color_g/2, color_b/2, 1);
+  draw rt top(0, 0)--rt bot(0, h)--lft bot (w, h)--lft top (w, 0)--cycle;
+endchar;
+
+% Brick 4
+beginchar("E", _brick_width*hsize, _brick_height*size, 0);
+  pickcolor (0.63921, 0.11764, 0.03921, 1);
+  pickup pensquare xscaled w yscaled h;
+  draw (w/2, h/2);
+  pickup pensquare;
+  pickcolor (color_r/2, color_g/2, color_b/2, 1);
+  draw rt top(0, 0)--rt bot(0, h)--lft bot (w, h)--lft top (w, 0)--cycle;
+endchar;
+
+

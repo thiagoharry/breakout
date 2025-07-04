@@ -13094,7 +13094,8 @@ struct metafont*_Wnew_metafont(char*filename){
   lexer(mf,filename,&first,&last);
   cx= init_context(mf);
   ret= eval_program(mf,cx,first,last);
-  _Wprint_metafont_error(mf);
+  if(!ret)
+    _Wprint_metafont_error(mf);
   destroy_context(cx);
   if(!ret){
     _Wdestroy_metafont(mf);

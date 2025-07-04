@@ -196,7 +196,6 @@ return false;
 }
 size= buffer[0]+(256*buffer[1])+(256*256*buffer[2])+
 (256*256*256*buffer[3]);
-printf("size: %lu\n",size);
 if(fseek(fp,size,SEEK_CUR)!=0){
 perror(filename);
 return false;

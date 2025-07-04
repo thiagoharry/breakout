@@ -641,8 +641,8 @@ MUTEX_INIT(&loading_files);
 int*window_width= &W.width,*window_height= &W.height;
 #if defined(W_FORCE_LANDSCAPE)
 if(rotated_screen){
-*window_width= &W.height;
-*window_height= &W.width;
+window_width= &W.height;
+window_height= &W.width;
 }
 #endif
 #line 1757 "weaver_api.tex"

@@ -1,5 +1,5 @@
 // This test shader and user interface support
-
+#include <string.h>
 #include "game.h"
 #include "weaver/metafont.h"
 static struct user_interface *game;
@@ -9,6 +9,15 @@ static struct sound *hit;
 
 static char buffer[BUFFER_SIZE];
 static bool reload = false;
+static bool up = false, down = false;
+
+void go_up(void){
+  up = true;
+}
+void go_down(void){
+  down = true;
+}
+
 
 char *get_source(void){
   FILE *fp;
@@ -67,11 +76,13 @@ void main_loop(void){ // The game loop
   if(W.keyboard[W_ESC])
     Wexit_loop();
 #endif
-  if(W.keyboard[W_UP] || W.mouse.dy > 0){
+  if(W.keyboard[W_UP] || up){
     _Wwrite_numeric_variable(game -> _internal_data, "control", 1.0);
+    up = false;
   }
-  else if(W.keyboard[W_DOWN] || W.mouse.dy < 0){
+  else if(W.keyboard[W_DOWN] || down){
     _Wwrite_numeric_variable(game -> _internal_data, "control", -1.0);
+    down = false;
   }
   if(_Wread_numeric_variable(game -> _internal_data, "sound") == 1.0){
     W.play_sound(hit);

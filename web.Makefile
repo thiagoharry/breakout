@@ -19,7 +19,7 @@ make-web: ${BC} ${W_BC} ${HEADERS} ${PLUGINS} conf/conf.h
 	cp -r sound/ docs
 	cp -r music/ docs
 	cp -r image/ docs
-	${FINAL_CC} -O2 -include conf/conf.h ${DEFINES} ${BC} ${PLUGIN_BC} ${W_BC} ${FINAL_FLAGS} ${SHADER_PRELOAD} -o docs/index.html ${LIB} --embed-file "image/game.mf" --embed-file "sound/nutfall.wav" -s TOTAL_MEMORY=536870912 -sEXPORTED_FUNCTIONS=_main,_get_source,_put_source -sEXPORTED_RUNTIME_METHODS=ccall,cwrap
+	${FINAL_CC} -O2 -include conf/conf.h ${DEFINES} ${BC} ${PLUGIN_BC} ${W_BC} ${FINAL_FLAGS} ${SHADER_PRELOAD} -o docs/index.js ${LIB} --embed-file "image/game.mf" --embed-file "sound/nutfall.wav" -s TOTAL_MEMORY=536870912 -sEXPORTED_FUNCTIONS=_main,_get_source,_put_source,_go_up,_go_down -sEXPORTED_RUNTIME_METHODS=ccall,cwrap
 create_shader_code:
 	mkdir -p .hidden_code .plugin
 	echo "struct _shader _shader_list[${NUMBER_OF_SHADERS}];" > .hidden_code/shader.h

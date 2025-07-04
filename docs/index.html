@@ -171,27 +171,32 @@
       function close_code(){
 	  code_area = document.getElementById("code_area");
 	  code_area.style.display='none';
-      }
+}
+var go_up, go_down;
+window.onload = function(){
+go_up = Module.cwrap('go_up', null, []);
+go_down = Module.cwrap('go_down', null, ['string']);
+};
       var move_up = false;
       var move_down = false;
       var intervalId = setInterval(function() {
 	  if(move_up){
-	      go_up = Module.cwrap('go_up', null, []);
 	      go_up();
 	  }
 	  else if(move_down){
-	      go_down = Module.cwrap('go_down', null, []);
 	      go_down();
 	  }
       }, 1);
       document.addEventListener('keydown', (event) => {
-	  audioCtx.resume();
 	  switch (event.key) {
-	  case "ArrowUp":
+          case "ArrowUp":
+              go_up();
 	      move_up = true;
 	      break;
 	  case "ArrowDown":
-	      move_down = true;
+move_down = true;
+	      go_down();
+
 	      break;
 	  }
       });
